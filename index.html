@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Coletor Espacial 2D</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts para estilo arcade/moderno -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      font-family: 'Fredoka', cursive, sans-serif;
+    }
+    /* Efeito de brilho neon */
+    .neon-text {
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 20px rgba(59, 130, 246, 0.6);
+    }
+    .neon-box {
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    }
+    /* Estilização suave para touch buttons */
+    .touch-btn:active {
+      transform: scale(0.92);
+      filter: brightness(1.2);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-2 sm:p-4 overflow-hidden select-none">
+
+  <!-- Container Principal do Jogo -->
+  <div class="relative w-full max-w-md h-[92vh] max-h-[850px] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-indigo-500/40 flex flex-col justify-between">
+    
+    <!-- Canvas do Jogo e Efeitos de Fundo -->
+    <canvas id="gameCanvas" class="absolute inset-0 w-full h-full block z-0"></canvas>
+
+    <!-- UI TOPO: Pontuação, Fase, Recorde e Vidas -->
+    <header id="gameHeader" class="relative z-10 w-full p-4 flex flex-col gap-2 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-transparent backdrop-blur-xs transition-opacity duration-300">
+      <div class="flex items-center justify-between">
+        <!-- Vidas -->
+        <div class="flex items-center gap-1 bg-slate-900/80 px-3 py-1.5 rounded-full border border-pink-500/30 shadow-inner">
+          <span class="text-xs uppercase font-bold text-pink-400 mr-1">Vidas:</span>
+          <div id="livesContainer" class="flex items-center gap-1 text-lg">
+            <span class="text-red-500 transform transition-transform animate-pulse">❤️</span>
+            <span class="text-red-500 transform transition-transform animate-pulse">❤️</span>
+            <span class="text-red-500 transform transition-transform animate-pulse">❤️</span>
+          </div>
+        </div>
+
+        <!-- Fase Atual -->
+        <div class="bg-indigo-900/80 px-3 py-1.5 rounded-full border border-indigo-400/40 shadow-inner">
+          <span class="text-xs uppercase font-bold text-indigo-300">Fase</span>
+          <span id="levelDisplay" class="font-bold text-amber-300 ml-1">1</span>
+        </div>
+
+        <!-- Recorde -->
+        <div class="bg-slate-900/80 px-3 py-1.5 rounded-full border border-amber-500/30 shadow-inner flex items-center gap-1">
+          <span class="text-amber-400 text-xs">👑</span>
+          <span id="highScoreTop" class="text-sm font-bold text-amber-300">0</span>
+        </div>
+      </div>
+
+      <!-- Placar de Pontos Grande -->
+      <div class="flex items-center justify-between px-2">
+        <div class="flex items-baseline gap-1">
+          <span class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Pontos</span>
+          <span id="scoreDisplay" class="text-3xl font-extrabold text-cyan-300 tracking-wider">0</span>
+        </div>
+        <div id="levelProgress" class="text-xs text-indigo-300 font-semibold bg-indigo-950/60 px-2.5 py-1 rounded-lg border border-indigo-500/20">
+          Próxima fase: <span id="nextLevelScore" class="text-cyan-400 font-bold">100</span> pts
+        </div>
+      </div>
+    </header>
+
+    <!-- MENSAGEM FLUTUANTE DE NOVA FASE -->
+    <div id="levelUpBanner" class="absolute inset-x-0 top-1/3 z-20 flex justify-center pointer-events-none transition-all duration-500 opacity-0 transform scale-50">
+      <div class="bg-gradient-to-r from-amber-500 to-pink-500 text-white font-extrabold text-2xl sm:text-3xl px-6 py-2 rounded-2xl shadow-2xl border-2 border-yellow-200">
+        🚀 NOVA FASE! 🌟
+      </div>
+    </div>
+
+    <!-- TELA INICIAL (MENU) -->
+    <div id="startScreen" class="absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-slate-950/85 backdrop-blur-md transition-all duration-300">
+      <div class="w-20 h-20 mb-3 bg-gradient-to-tr from-cyan-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/30 animate-bounce">
+        <span class="text-4xl">🛸</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300 neon-text tracking-wide mb-2">
+        COLETOR ESPACIAL 2D
+      </h1>
+      <p class="text-slate-300 text-center text-sm mb-6 max-w-xs">
+        Colete as esferas de energia, evite os meteoros flamejantes e avance de fase!
+      </p>
+
+      <!-- Instruções de Itens -->
+      <div class="bg-slate-900/90 border border-slate-700/60 rounded-2xl p-3 w-full max-w-xs mb-6 text-xs flex flex-col gap-2">
+        <div class="flex items-center gap-3">
+          <div class="w-6 h-6 rounded-full bg-emerald-400 flex items-center justify-center shadow-md shadow-emerald-500/50">✨</div>
+          <span class="text-slate-200"><b class="text-emerald-400">Esfera de Energia:</b> +10 Pontos</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shadow-md shadow-red-500/50">🔥</div>
+          <span class="text-slate-200"><b class="text-red-400">Meteoro:</b> Perde 1 Vida</span>
+        </div>
+      </div>
+
+      <!-- Recorde Atual -->
+      <div class="mb-6 flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 px-4 py-2 rounded-xl text-amber-300">
+        <span class="text-lg">🏆</span>
+        <span class="text-sm font-semibold">Recorde Atual: <span id="startHighScore" class="font-bold text-amber-400">0</span></span>
+      </div>
+
+      <!-- Botão Jogar -->
+      <button id="btnPlay" class="w-full max-w-xs py-4 px-6 rounded-2xl font-black text-xl text-slate-950 bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 shadow-xl shadow-cyan-500/30 active:scale-95 transition-transform duration-150 uppercase tracking-wider cursor-pointer">
+        JOGAR AGORA
+      </button>
+      
+      <p class="text-slate-400 text-xs mt-4 text-center">
+        Use as <b>Setas</b> ◀ ▶ no PC ou <b>Toque</b> na tela/botões no celular
+      </p>
+    </div>
+
+    <!-- TELA DE FIM DE JOGO (GAME OVER) -->
+    <div id="gameOverScreen" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md transition-all duration-300">
+      <div class="w-20 h-20 mb-3 bg-red-950/80 border-2 border-red-500/50 rounded-2xl flex items-center justify-center text-4xl shadow-lg shadow-red-500/20">
+        💥
+      </div>
+      <h2 class="text-3xl font-black text-red-400 tracking-wide mb-1">
+        FIM DE JOGO!
+      </h2>
+      <p class="text-slate-300 text-sm mb-4">Sua nave foi destruída no espaço!</p>
+
+      <!-- Painel de Pontos Finais -->
+      <div class="w-full max-w-xs bg-slate-900/90 border border-slate-700 p-4 rounded-2xl flex flex-col gap-3 mb-6">
+        <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+          <span class="text-slate-400 text-sm">Pontuação Final:</span>
+          <span id="finalScore" class="text-2xl font-extrabold text-cyan-300">0</span>
+        </div>
+        <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+          <span class="text-slate-400 text-sm">Fase Alcançada:</span>
+          <span id="finalLevel" class="text-xl font-bold text-amber-300">Fase 1</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-slate-400 text-sm flex items-center gap-1">
+            <span>👑</span> Recorde:
+          </span>
+          <span id="finalHighScore" class="text-xl font-bold text-amber-400">0</span>
+        </div>
+        <div id="newRecordBadge" class="hidden text-center bg-gradient-to-r from-amber-500 to-yellow-300 text-slate-950 font-black text-xs py-1 rounded-lg animate-pulse uppercase tracking-wider">
+          🎉 Novo Recorde Pessoal! 🎉
+        </div>
+      </div>
+
+      <!-- Botão Jogar de Novo -->
+      <button id="btnRestart" class="w-full max-w-xs py-4 px-6 rounded-2xl font-black text-xl text-slate-950 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 shadow-xl shadow-orange-500/30 active:scale-95 transition-transform duration-150 uppercase tracking-wider cursor-pointer">
+        JOGAR DE NOVO
+      </button>
+    </div>
+
+    <!-- ÁREA DE CONTROLES TOUCH (RODAPÉ) -->
+    <footer id="mobileControls" class="relative z-10 w-full p-4 flex justify-between items-center gap-4 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent">
+      <!-- Botão Esquerda -->
+      <button id="btnLeft" class="touch-btn flex-1 py-4 bg-slate-800/80 active:bg-cyan-600/80 border-2 border-cyan-400/40 rounded-2xl flex items-center justify-center text-cyan-300 text-2xl font-bold shadow-lg transition-all backdrop-blur-sm">
+        ◀ ESQUERDA
+      </button>
+      
+      <!-- Botão Direita -->
+      <button id="btnRight" class="touch-btn flex-1 py-4 bg-slate-800/80 active:bg-cyan-600/80 border-2 border-cyan-400/40 rounded-2xl flex items-center justify-center text-cyan-300 text-2xl font-bold shadow-lg transition-all backdrop-blur-sm">
+        DIREITA ▶
+      </button>
+    </footer>
+
+  </div>
+
+  <!-- LÓGICA DO JOGO -->
+  <script>
+    // --- GERENCIAMENTO DE ÁUDIO SINTETIZADO (Web Audio API) ---
+    // Cria efeitos sonoros divertidos sem depender de arquivos externos!
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'coin') {
+          // Som agradável de esfera de energia (estilo moeda espacial)
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(587.33, now); // D5
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        } else if (type === 'hit') {
+          // Som de impacto / dano
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(160, now);
+          osc.frequency.exponentialRampToValueAtTime(40, now + 0.25);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === 'levelup') {
+          // Fanfarra curta de nova fase
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.setValueAtTime(554.37, now + 0.08);
+          osc.frequency.setValueAtTime(659.25, now + 0.16);
+          osc.frequency.setValueAtTime(880, now + 0.24);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+          osc.start(now);
+          osc.stop(now + 0.45);
+        } else if (type === 'gameover') {
+          // Som descendente de game over
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.linearRampToValueAtTime(80, now + 0.5);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+          osc.start(now);
+          osc.stop(now + 0.5);
+        }
+      } catch (e) {
+        // Ignora caso áudio não esteja disponível
+      }
+    }
+
+    // --- ELEMENTOS DO DOM ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const levelDisplay = document.getElementById('levelDisplay');
+    const nextLevelScore = document.getElementById('nextLevelScore');
+    const livesContainer = document.getElementById('livesContainer');
+    const highScoreTop = document.getElementById('highScoreTop');
+    const levelUpBanner = document.getElementById('levelUpBanner');
+
+    const startScreen = document.getElementById('startScreen');
+    const startHighScore = document.getElementById('startHighScore');
+    const btnPlay = document.getElementById('btnPlay');
+
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const finalScore = document.getElementById('finalScore');
+    const finalLevel = document.getElementById('finalLevel');
+    const finalHighScore = document.getElementById('finalHighScore');
+    const newRecordBadge = document.getElementById('newRecordBadge');
+    const btnRestart = document.getElementById('btnRestart');
+
+    const btnLeft = document.getElementById('btnLeft');
+    const btnRight = document.getElementById('btnRight');
+
+    // --- ESTADO DO JOGO ---
+    let gameState = 'START'; // 'START' | 'PLAYING' | 'GAMEOVER'
+    let score = 0;
+    let lives = 3;
+    let level = 1;
+    let highScore = parseInt(localStorage.getItem('coletor_espacial_highscore') || '0', 10);
+
+    // Atualiza recordes na interface
+    highScoreTop.innerText = highScore;
+    startHighScore.innerText = highScore;
+
+    // Dimensões Virtuais do Canvas
+    let width = 0;
+    let height = 0;
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      width = canvas.width;
+      height = canvas.height;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      if (player) {
+        player.y = (canvas.height / window.devicePixelRatio) - 95;
+      }
+    });
+
+    // --- ESTRELAS DE FUNDO (Cenário Dinâmico) ---
+    const stars = [];
+    const NUM_STARS = 65;
+
+    function initStars() {
+      stars.length = 0;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      for (let i = 0; i < NUM_STARS; i++) {
+        stars.push({
+          x: Math.random() * 500,
+          y: Math.random() * 900,
+          radius: Math.random() * 1.8 + 0.5,
+          speed: Math.random() * 0.75 + 0.25,
+          alpha: Math.random() * 0.8 + 0.2,
+          twinkleSpeed: Math.random() * 0.02 + 0.01
+        });
+      }
+    }
+    initStars();
+
+    // --- NAVE DO JOGADOR ---
+    const player = {
+      x: 180,
+      y: 500,
+      width: 46,
+      height: 48,
+      speed: 6.5,
+      targetX: null,
+      movingLeft: false,
+      movingRight: false,
+      invulnerableTimer: 0
+    };
+
+    // --- OBJETOS EM QUEDA (Esferas e Meteoros) ---
+    const items = [];
+    let spawnCounter = 0;
+    let particles = [];
+
+    // --- SISTEMA DE PARTÍCULAS (Explosões e Brilhos) ---
+    function spawnParticles(x, y, color, count = 10) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const spd = Math.random() * 3 + 1;
+        particles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * spd,
+          vy: Math.sin(angle) * spd,
+          radius: Math.random() * 3 + 1.5,
+          color: color,
+          alpha: 1,
+          life: 25 + Math.random() * 15
+        });
+      }
+    }
+
+    // --- ATUALIZAÇÃO DA INTERFACE ---
+    function updateHUD() {
+      scoreDisplay.innerText = score;
+      levelDisplay.innerText = level;
+      nextLevelScore.innerText = level * 100;
+      highScoreTop.innerText = highScore;
+
+      // Atualiza os corações de vida
+      livesContainer.innerHTML = '';
+      for (let i = 0; i < 3; i++) {
+        const heart = document.createElement('span');
+        if (i < lives) {
+          heart.innerText = '❤️';
+          heart.className = 'text-red-500 transform transition-transform scale-100';
+        } else {
+          heart.innerText = '🖤';
+          heart.className = 'opacity-30 filter grayscale';
+        }
+        livesContainer.appendChild(heart);
+      }
+    }
+
+    // --- INÍCIO E REINÍCIO ---
+    function startGame() {
+      score = 0;
+      lives = 3;
+      level = 1;
+      items.length = 0;
+      particles.length = 0;
+      spawnCounter = 0;
+      gameState = 'PLAYING';
+
+      const logicalW = canvas.width / window.devicePixelRatio;
+      const logicalH = canvas.height / window.devicePixelRatio;
+      player.x = logicalW / 2 - player.width / 2;
+      player.y = logicalH - 95;
+      player.targetX = null;
+      player.movingLeft = false;
+      player.movingRight = false;
+      player.invulnerableTimer = 0;
+
+      updateHUD();
+      startScreen.classList.add('hidden');
+      gameOverScreen.classList.add('hidden');
+    }
+
+    function triggerGameOver() {
+      gameState = 'GAMEOVER';
+      playSound('gameover');
+
+      // Verifica se bateu recorde
+      let isNewRecord = false;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('coletor_espacial_highscore', highScore.toString());
+        isNewRecord = true;
+      }
+
+      finalScore.innerText = score;
+      finalLevel.innerText = `Fase ${level}`;
+      finalHighScore.innerText = highScore;
+      highScoreTop.innerText = highScore;
+
+      if (isNewRecord && score > 0) {
+        newRecordBadge.classList.remove('hidden');
+      } else {
+        newRecordBadge.classList.add('hidden');
+      }
+
+      gameOverScreen.classList.remove('hidden');
+    }
+
+    function checkLevelUp() {
+      const targetScore = level * 100;
+      if (score >= targetScore) {
+        level++;
+        playSound('levelup');
+
+        // Mostra animação do banner de level up
+        levelUpBanner.classList.remove('opacity-0', 'scale-50');
+        levelUpBanner.classList.add('opacity-100', 'scale-110');
+        setTimeout(() => {
+          levelUpBanner.classList.remove('opacity-100', 'scale-110');
+          levelUpBanner.classList.add('opacity-0', 'scale-50');
+        }, 1300);
+
+        updateHUD();
+      }
+    }
+
+    // --- CONTROLES: TECLADO (PC) ---
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'KeyA') {
+        player.movingLeft = true;
+        player.targetX = null; // desativa arraste
+      } else if (e.key === 'ArrowRight' || e.key === 'KeyD') {
+        player.movingRight = true;
+        player.targetX = null;
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'KeyA') {
+        player.movingLeft = false;
+      } else if (e.key === 'ArrowRight' || e.key === 'KeyD') {
+        player.movingRight = false;
+      }
+    });
+
+    // --- CONTROLES: BOTÕES TOUCH ---
+    const addHoldEvent = (element, onStart, onEnd) => {
+      element.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        onStart();
+      });
+      element.addEventListener('pointerup', (e) => {
+        e.preventDefault();
+        onEnd();
+      });
+      element.addEventListener('pointerleave', (e) => {
+        e.preventDefault();
+        onEnd();
+      });
+      element.addEventListener('pointercancel', (e) => {
+        e.preventDefault();
+        onEnd();
+      });
+    };
+
+    addHoldEvent(btnLeft, 
+      () => { player.movingLeft = true; player.targetX = null; }, 
+      () => { player.movingLeft = false; }
+    );
+    addHoldEvent(btnRight, 
+      () => { player.movingRight = true; player.targetX = null; }, 
+      () => { player.movingRight = false; }
+    );
+
+    // --- CONTROLES: TOQUE / ARRASTO NA TELA ---
+    function handlePointerPosition(e) {
+      if (gameState !== 'PLAYING') return;
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : null);
+      if (clientX !== null) {
+        const xOnCanvas = clientX - rect.left;
+        player.targetX = xOnCanvas - player.width / 2;
+      }
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      handlePointerPosition(e);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (e.buttons > 0 || e.pointerType === 'touch') {
+        handlePointerPosition(e);
+      }
+    });
+
+    btnPlay.addEventListener('click', () => {
+      playSound('coin');
+      startGame();
+    });
+
+    btnRestart.addEventListener('click', () => {
+      playSound('coin');
+      startGame();
+    });
+
+    // --- SPAWN DE OBJETOS ---
+    function spawnItem(logicalW) {
+      // Itens:
+      // ~65% chance de Esfera de Energia (+10 pontos)
+      // ~35% chance de Meteoro (-1 vida)
+      const isEnergy = Math.random() < 0.65;
+      const size = isEnergy ? 28 : 34;
+      const x = Math.random() * (logicalW - size - 10) + 5;
+      
+      // Velocidade base + incremento por fase
+      const baseSpeed = 2.0 + (level - 1) * 0.55;
+      const speed = baseSpeed + Math.random() * 1.5;
+
+      // Tipos visuais
+      const energyColor = Math.random() > 0.5 ? '#10b981' : '#06b6d4'; // Verde ou Azul Esmeralda
+      const meteorColor = Math.random() > 0.5 ? '#ef4444' : '#f97316'; // Vermelho ou Laranja
+
+      items.push({
+        x: x,
+        y: -size,
+        size: size,
+        speed: speed,
+        type: isEnergy ? 'energy' : 'meteor',
+        color: isEnergy ? energyColor : meteorColor,
+        rotation: 0,
+        rotationSpeed: (Math.random() - 0.5) * 0.08,
+        pulse: Math.random() * Math.PI
+      });
+    }
+
+    // --- LOOP PRINCIPAL DO JOGO ---
+    let lastTime = performance.now();
+
+    function gameLoop(now) {
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      const logicalW = canvas.width / window.devicePixelRatio;
+      const logicalH = canvas.height / window.devicePixelRatio;
+
+      // 1. Limpeza do Canvas
+      ctx.clearRect(0, 0, logicalW, logicalH);
+
+      // 2. Fundo Espacial com Estrelas Animadas
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(0, 0, logicalW, logicalH);
+
+      // Gradiente sutil de nebulosa
+      const nebulaGrad = ctx.createRadialGradient(logicalW * 0.5, logicalH * 0.4, 30, logicalW * 0.5, logicalH * 0.4, logicalW * 0.8);
+      nebulaGrad.addColorStop(0, 'rgba(56, 189, 248, 0.06)');
+      nebulaGrad.addColorStop(0.5, 'rgba(147, 51, 234, 0.04)');
+      nebulaGrad.addColorStop(1, 'rgba(2, 6, 23, 0)');
+      ctx.fillStyle = nebulaGrad;
+      ctx.fillRect(0, 0, logicalW, logicalH);
+
+      // Desenho e Movimento das Estrelas
+      for (let star of stars) {
+        star.y += star.speed;
+        if (star.y > logicalH) {
+          star.y = 0;
+          star.x = Math.random() * logicalW;
+        }
+        star.alpha += Math.sin(now * star.twinkleSpeed) * 0.02;
+        star.alpha = Math.max(0.2, Math.min(1, star.alpha));
+
+        ctx.beginPath();
+        ctx.arc(star.x % logicalW, star.y, star.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+        ctx.fill();
+      }
+
+      // 3. Atualização do Jogador se estiver jogando
+      if (gameState === 'PLAYING') {
+        // Movimento por teclas/botões
+        if (player.movingLeft) {
+          player.x -= player.speed;
+        }
+        if (player.movingRight) {
+          player.x += player.speed;
+        }
+
+        // Movimento suave para o toque do dedo (arraste)
+        if (player.targetX !== null) {
+          const diff = player.targetX - player.x;
+          if (Math.abs(diff) > 2) {
+            player.x += diff * 0.22;
+          } else {
+            player.x = player.targetX;
+          }
+        }
+
+        // Limites da tela
+        if (player.x < 5) player.x = 5;
+        if (player.x + player.width > logicalW - 5) {
+          player.x = logicalW - player.width - 5;
+        }
+
+        if (player.invulnerableTimer > 0) {
+          player.invulnerableTimer--;
+        }
+
+        // 4. Geração de Novos Itens
+        spawnCounter++;
+        // Intervalo de spawn diminui a cada fase (fica mais dinâmico)
+        const spawnRate = Math.max(28, 55 - (level - 1) * 5);
+        if (spawnCounter >= spawnRate) {
+          spawnCounter = 0;
+          spawnItem(logicalW);
+        }
+      }
+
+      // 5. Atualização e Renderização dos Itens em Queda
+      for (let i = items.length - 1; i >= 0; i--) {
+        const item = items[i];
+
+        if (gameState === 'PLAYING') {
+          item.y += item.speed;
+          item.rotation += item.rotationSpeed;
+          item.pulse += 0.08;
+        }
+
+        // Renderização do Item
+        ctx.save();
+        ctx.translate(item.x + item.size / 2, item.y + item.size / 2);
+        ctx.rotate(item.rotation);
+
+        if (item.type === 'energy') {
+          // Esfera de Energia brilhante (Verde/Azul) com anel de pulso
+          const pulseScale = 1 + Math.sin(item.pulse) * 0.12;
+          ctx.scale(pulseScale, pulseScale);
+
+          // Brilho externo (Glow)
+          ctx.beginPath();
+          ctx.arc(0, 0, item.size / 2 + 3, 0, Math.PI * 2);
+          ctx.fillStyle = item.color === '#10b981' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(6, 182, 212, 0.3)';
+          ctx.fill();
+
+          // Núcleo brilhante
+          const grad = ctx.createRadialGradient(-3, -3, 2, 0, 0, item.size / 2);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.4, item.color);
+          grad.addColorStop(1, '#0f172a');
+          ctx.beginPath();
+          ctx.arc(0, 0, item.size / 2, 0, Math.PI * 2);
+          ctx.fillStyle = grad;
+          ctx.fill();
+
+          // Anel orbital de partículas
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(0, 0, item.size / 2 - 2, 0, Math.PI * 1.5);
+          ctx.stroke();
+
+        } else {
+          // Meteoro Flamejante (Vermelho/Laranja)
+          const grad = ctx.createRadialGradient(-4, -4, 3, 0, 0, item.size / 2);
+          grad.addColorStop(0, '#fef08a');
+          grad.addColorStop(0.35, '#f97316');
+          grad.addColorStop(0.85, '#dc2626');
+          grad.addColorStop(1, '#7f1d1d');
+
+          // Corpo rochoso do meteoro
+          ctx.beginPath();
+          const r = item.size / 2;
+          ctx.arc(0, 0, r, 0, Math.PI * 2);
+          ctx.fillStyle = grad;
+          ctx.fill();
+
+          // Detalhes de crateras no meteoro
+          ctx.fillStyle = 'rgba(69, 10, 10, 0.6)';
+          ctx.beginPath();
+          ctx.arc(-r * 0.3, -r * 0.2, r * 0.22, 0, Math.PI * 2);
+          ctx.arc(r * 0.3, r * 0.2, r * 0.28, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Rastro de fogo na cauda
+          ctx.fillStyle = 'rgba(249, 115, 22, 0.4)';
+          ctx.beginPath();
+          ctx.moveTo(-r * 0.7, -r * 0.2);
+          ctx.lineTo(0, -r * 1.4);
+          ctx.lineTo(r * 0.7, -r * 0.2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+
+        // 6. Teste de Colisão com o Jogador
+        if (gameState === 'PLAYING') {
+          // Caixa de colisão simplificada e justa
+          const px = player.x + 6;
+          const py = player.y + 6;
+          const pw = player.width - 12;
+          const ph = player.height - 12;
+
+          const ix = item.x;
+          const iy = item.y;
+          const isz = item.size;
+
+          const hit = (px < ix + isz && px + pw > ix && py < iy + isz && py + ph > iy);
+
+          if (hit) {
+            if (item.type === 'energy') {
+              // Pegou energia!
+              score += 10;
+              playSound('coin');
+              spawnParticles(item.x + item.size / 2, item.y + item.size / 2, item.color, 12);
+              checkLevelUp();
+              updateHUD();
+              items.splice(i, 1);
+              continue;
+            } else if (item.type === 'meteor') {
+              // Atingido por meteoro!
+              if (player.invulnerableTimer === 0) {
+                lives--;
+                playSound('hit');
+                spawnParticles(item.x + item.size / 2, item.y + item.size / 2, '#ef4444', 18);
+                player.invulnerableTimer = 40; // ~0.6s de invulnerabilidade piscando
+                updateHUD();
+
+                if (lives <= 0) {
+                  triggerGameOver();
+                  break;
+                }
+              }
+              items.splice(i, 1);
+              continue;
+            }
+          }
+
+          // Remove quando passa do chão da tela
+          if (item.y > logicalH + 40) {
+            items.splice(i, 1);
+          }
+        }
+      }
+
+      // 7. Partículas
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.alpha -= 1 / p.life;
+
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      }
+
+      // 8. Renderização da Nave Espacial do Jogador
+      if (gameState === 'PLAYING' || gameState === 'START') {
+        ctx.save();
+
+        // Efeito de piscar caso esteja temporariamente invulnerável após dano
+        if (player.invulnerableTimer > 0 && Math.floor(player.invulnerableTimer / 4) % 2 === 0) {
+          ctx.globalAlpha = 0.4;
+        }
+
+        const cx = player.x + player.width / 2;
+        const cy = player.y + player.height / 2;
+
+        // Propulsor de Fogo / Plasma embaixo da nave
+        const thrusterHeight = 12 + Math.sin(now * 0.03) * 6;
+        const thrusterGrad = ctx.createLinearGradient(cx, player.y + player.height - 4, cx, player.y + player.height + thrusterHeight);
+        thrusterGrad.addColorStop(0, '#38bdf8');
+        thrusterGrad.addColorStop(0.4, '#06b6d4');
+        thrusterGrad.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+        ctx.beginPath();
+        ctx.moveTo(cx - 8, player.y + player.height - 5);
+        ctx.lineTo(cx, player.y + player.height + thrusterHeight);
+        ctx.lineTo(cx + 8, player.y + player.height - 5);
+        ctx.fillStyle = thrusterGrad;
+        ctx.fill();
+
+        // Asas da Nave
+        ctx.beginPath();
+        ctx.moveTo(cx, player.y);
+        ctx.lineTo(player.x + player.width, player.y + player.height - 6);
+        ctx.lineTo(cx + 10, player.y + player.height - 10);
+        ctx.lineTo(cx, player.y + player.height - 6);
+        ctx.lineTo(cx - 10, player.y + player.height - 10);
+        ctx.lineTo(player.x, player.y + player.height - 6);
+        ctx.closePath();
+
+        const shipGrad = ctx.createLinearGradient(player.x, player.y, player.x + player.width, player.y + player.height);
+        shipGrad.addColorStop(0, '#38bdf8');
+        shipGrad.addColorStop(0.5, '#2563eb');
+        shipGrad.addColorStop(1, '#1d4ed8');
+        ctx.fillStyle = shipGrad;
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#93c5fd';
+        ctx.stroke();
+
+        // Cabine do Piloto de Vidro (Cockpit Cyan)
+        ctx.beginPath();
+        ctx.ellipse(cx, player.y + 16, 7, 11, 0, 0, Math.PI * 2);
+        const cockpitGrad = ctx.createRadialGradient(cx - 2, player.y + 13, 1, cx, player.y + 16, 7);
+        cockpitGrad.addColorStop(0, '#ffffff');
+        cockpitGrad.addColorStop(0.5, '#67e8f9');
+        cockpitGrad.addColorStop(1, '#0284c7');
+        ctx.fillStyle = cockpitGrad;
+        ctx.fill();
+
+        // Canhões de Ponta de Asa
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(player.x + 1, player.y + player.height - 14, 3, 7);
+        ctx.fillRect(player.x + player.width - 4, player.y + player.height - 14, 3, 7);
+
+        ctx.restore();
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Inicialização da tela e canvas
+    window.addEventListener('load', () => {
+      resizeCanvas();
+      const logicalW = canvas.width / window.devicePixelRatio;
+      const logicalH = canvas.height / window.devicePixelRatio;
+      player.x = logicalW / 2 - player.width / 2;
+      player.y = logicalH - 95;
+      updateHUD();
+      requestAnimationFrame(gameLoop);
+    });
+  </script>
+</body>
+</html>
