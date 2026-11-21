@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -17,13 +18,16 @@
       touch-action: manipulation;
       font-family: 'Fredoka', cursive, sans-serif;
     }
+
     /* Efeito de brilho neon */
     .neon-text {
       text-shadow: 0 0 10px rgba(56, 189, 248, 0.8), 0 0 20px rgba(59, 130, 246, 0.6);
     }
+
     .neon-box {
       box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
     }
+
     /* Estilização suave para touch buttons */
     .touch-btn:active {
       transform: scale(0.92);
@@ -31,19 +35,24 @@
     }
   </style>
 </head>
-<body class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-2 sm:p-4 overflow-hidden select-none">
+
+<body
+  class="bg-slate-950 text-white min-h-screen flex items-center justify-center p-2 sm:p-4 overflow-hidden select-none">
 
   <!-- Container Principal do Jogo -->
-  <div class="relative w-full max-w-md h-[92vh] max-h-[850px] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-indigo-500/40 flex flex-col justify-between">
-    
+  <div
+    class="relative w-full max-w-md h-[92vh] max-h-[850px] bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-indigo-500/40 flex flex-col justify-between">
+
     <!-- Canvas do Jogo e Efeitos de Fundo -->
     <canvas id="gameCanvas" class="absolute inset-0 w-full h-full block z-0"></canvas>
 
     <!-- UI TOPO: Pontuação, Fase, Recorde e Vidas -->
-    <header id="gameHeader" class="relative z-10 w-full p-4 flex flex-col gap-2 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-transparent backdrop-blur-xs transition-opacity duration-300">
+    <header id="gameHeader"
+      class="relative z-10 w-full p-4 flex flex-col gap-2 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-transparent backdrop-blur-xs transition-opacity duration-300">
       <div class="flex items-center justify-between">
         <!-- Vidas -->
-        <div class="flex items-center gap-1 bg-slate-900/80 px-3 py-1.5 rounded-full border border-pink-500/30 shadow-inner">
+        <div
+          class="flex items-center gap-1 bg-slate-900/80 px-3 py-1.5 rounded-full border border-pink-500/30 shadow-inner">
           <span class="text-xs uppercase font-bold text-pink-400 mr-1">Vidas:</span>
           <div id="livesContainer" class="flex items-center gap-1 text-lg">
             <span class="text-red-500 transform transition-transform animate-pulse">❤️</span>
@@ -59,7 +68,8 @@
         </div>
 
         <!-- Recorde -->
-        <div class="bg-slate-900/80 px-3 py-1.5 rounded-full border border-amber-500/30 shadow-inner flex items-center gap-1">
+        <div
+          class="bg-slate-900/80 px-3 py-1.5 rounded-full border border-amber-500/30 shadow-inner flex items-center gap-1">
           <span class="text-amber-400 text-xs">👑</span>
           <span id="highScoreTop" class="text-sm font-bold text-amber-300">0</span>
         </div>
@@ -71,25 +81,31 @@
           <span class="text-slate-400 text-xs uppercase tracking-wider font-semibold">Pontos</span>
           <span id="scoreDisplay" class="text-3xl font-extrabold text-cyan-300 tracking-wider">0</span>
         </div>
-        <div id="levelProgress" class="text-xs text-indigo-300 font-semibold bg-indigo-950/60 px-2.5 py-1 rounded-lg border border-indigo-500/20">
+        <div id="levelProgress"
+          class="text-xs text-indigo-300 font-semibold bg-indigo-950/60 px-2.5 py-1 rounded-lg border border-indigo-500/20">
           Próxima fase: <span id="nextLevelScore" class="text-cyan-400 font-bold">100</span> pts
         </div>
       </div>
     </header>
 
     <!-- MENSAGEM FLUTUANTE DE NOVA FASE -->
-    <div id="levelUpBanner" class="absolute inset-x-0 top-1/3 z-20 flex justify-center pointer-events-none transition-all duration-500 opacity-0 transform scale-50">
-      <div class="bg-gradient-to-r from-amber-500 to-pink-500 text-white font-extrabold text-2xl sm:text-3xl px-6 py-2 rounded-2xl shadow-2xl border-2 border-yellow-200">
+    <div id="levelUpBanner"
+      class="absolute inset-x-0 top-1/3 z-20 flex justify-center pointer-events-none transition-all duration-500 opacity-0 transform scale-50">
+      <div
+        class="bg-gradient-to-r from-amber-500 to-pink-500 text-white font-extrabold text-2xl sm:text-3xl px-6 py-2 rounded-2xl shadow-2xl border-2 border-yellow-200">
         🚀 NOVA FASE! 🌟
       </div>
     </div>
 
     <!-- TELA INICIAL (MENU) -->
-    <div id="startScreen" class="absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-slate-950/85 backdrop-blur-md transition-all duration-300">
-      <div class="w-20 h-20 mb-3 bg-gradient-to-tr from-cyan-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/30 animate-bounce">
+    <div id="startScreen"
+      class="absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-slate-950/85 backdrop-blur-md transition-all duration-300">
+      <div
+        class="w-20 h-20 mb-3 bg-gradient-to-tr from-cyan-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/30 animate-bounce">
         <span class="text-4xl">🛸</span>
       </div>
-      <h1 class="text-3xl sm:text-4xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300 neon-text tracking-wide mb-2">
+      <h1
+        class="text-3xl sm:text-4xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300 neon-text tracking-wide mb-2">
         COLETOR ESPACIAL 2D
       </h1>
       <p class="text-slate-300 text-center text-sm mb-6 max-w-xs">
@@ -97,36 +113,52 @@
       </p>
 
       <!-- Instruções de Itens -->
-      <div class="bg-slate-900/90 border border-slate-700/60 rounded-2xl p-3 w-full max-w-xs mb-6 text-xs flex flex-col gap-2">
+      <div
+        class="bg-slate-900/90 border border-slate-700/60 rounded-2xl p-3 w-full max-w-xs mb-6 text-xs flex flex-col gap-2">
         <div class="flex items-center gap-3">
-          <div class="w-6 h-6 rounded-full bg-emerald-400 flex items-center justify-center shadow-md shadow-emerald-500/50">✨</div>
+          <div
+            class="w-6 h-6 rounded-full bg-emerald-400 flex items-center justify-center shadow-md shadow-emerald-500/50">
+            ✨</div>
           <span class="text-slate-200"><b class="text-emerald-400">Esfera de Energia:</b> +10 Pontos</span>
         </div>
         <div class="flex items-center gap-3">
-          <div class="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shadow-md shadow-red-500/50">🔥</div>
+          <div class="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shadow-md shadow-red-500/50">🔥
+          </div>
           <span class="text-slate-200"><b class="text-red-400">Meteoro:</b> Perde 1 Vida</span>
         </div>
       </div>
 
       <!-- Recorde Atual -->
-      <div class="mb-6 flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 px-4 py-2 rounded-xl text-amber-300">
+      <div
+        class="mb-6 flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 px-4 py-2 rounded-xl text-amber-300">
         <span class="text-lg">🏆</span>
-        <span class="text-sm font-semibold">Recorde Atual: <span id="startHighScore" class="font-bold text-amber-400">0</span></span>
+        <span class="text-sm font-semibold">Recorde Atual: <span id="startHighScore"
+            class="font-bold text-amber-400">0</span></span>
       </div>
 
       <!-- Botão Jogar -->
-      <button id="btnPlay" class="w-full max-w-xs py-4 px-6 rounded-2xl font-black text-xl text-slate-950 bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 shadow-xl shadow-cyan-500/30 active:scale-95 transition-transform duration-150 uppercase tracking-wider cursor-pointer">
+      <button id="btnPlay"
+        class="w-full max-w-xs py-4 px-6 rounded-2xl font-black text-xl text-slate-950 bg-gradient-to-r from-cyan-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 shadow-xl shadow-cyan-500/30 active:scale-95 transition-transform duration-150 uppercase tracking-wider cursor-pointer">
         JOGAR AGORA
       </button>
-      
+
       <p class="text-slate-400 text-xs mt-4 text-center">
         Use as <b>Setas</b> ◀ ▶ no PC ou <b>Toque</b> na tela/botões no celular
       </p>
+
+      <!-- Créditos de Desenvolvimento -->
+      <div class="mt-3 text-center">
+        <p class="text-xs text-slate-400 font-medium">
+          Desenvolvido por : <span class="text-cyan-300 font-semibold">Izzy Soares / Izabelly Cantalice</span>
+        </p>
+      </div>
     </div>
 
     <!-- TELA DE FIM DE JOGO (GAME OVER) -->
-    <div id="gameOverScreen" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md transition-all duration-300">
-      <div class="w-20 h-20 mb-3 bg-red-950/80 border-2 border-red-500/50 rounded-2xl flex items-center justify-center text-4xl shadow-lg shadow-red-500/20">
+    <div id="gameOverScreen"
+      class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center p-6 bg-slate-950/90 backdrop-blur-md transition-all duration-300">
+      <div
+        class="w-20 h-20 mb-3 bg-red-950/80 border-2 border-red-500/50 rounded-2xl flex items-center justify-center text-4xl shadow-lg shadow-red-500/20">
         💥
       </div>
       <h2 class="text-3xl font-black text-red-400 tracking-wide mb-1">
@@ -150,26 +182,31 @@
           </span>
           <span id="finalHighScore" class="text-xl font-bold text-amber-400">0</span>
         </div>
-        <div id="newRecordBadge" class="hidden text-center bg-gradient-to-r from-amber-500 to-yellow-300 text-slate-950 font-black text-xs py-1 rounded-lg animate-pulse uppercase tracking-wider">
+        <div id="newRecordBadge"
+          class="hidden text-center bg-gradient-to-r from-amber-500 to-yellow-300 text-slate-950 font-black text-xs py-1 rounded-lg animate-pulse uppercase tracking-wider">
           🎉 Novo Recorde Pessoal! 🎉
         </div>
       </div>
 
       <!-- Botão Jogar de Novo -->
-      <button id="btnRestart" class="w-full max-w-xs py-4 px-6 rounded-2xl font-black text-xl text-slate-950 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 shadow-xl shadow-orange-500/30 active:scale-95 transition-transform duration-150 uppercase tracking-wider cursor-pointer">
+      <button id="btnRestart"
+        class="w-full max-w-xs py-4 px-6 rounded-2xl font-black text-xl text-slate-950 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 shadow-xl shadow-orange-500/30 active:scale-95 transition-transform duration-150 uppercase tracking-wider cursor-pointer">
         JOGAR DE NOVO
       </button>
     </div>
 
     <!-- ÁREA DE CONTROLES TOUCH (RODAPÉ) -->
-    <footer id="mobileControls" class="relative z-10 w-full p-4 flex justify-between items-center gap-4 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent">
+    <footer id="mobileControls"
+      class="relative z-10 w-full p-4 flex justify-between items-center gap-4 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent">
       <!-- Botão Esquerda -->
-      <button id="btnLeft" class="touch-btn flex-1 py-4 bg-slate-800/80 active:bg-cyan-600/80 border-2 border-cyan-400/40 rounded-2xl flex items-center justify-center text-cyan-300 text-2xl font-bold shadow-lg transition-all backdrop-blur-sm">
+      <button id="btnLeft"
+        class="touch-btn flex-1 py-4 bg-slate-800/80 active:bg-cyan-600/80 border-2 border-cyan-400/40 rounded-2xl flex items-center justify-center text-cyan-300 text-2xl font-bold shadow-lg transition-all backdrop-blur-sm">
         ◀ ESQUERDA
       </button>
-      
+
       <!-- Botão Direita -->
-      <button id="btnRight" class="touch-btn flex-1 py-4 bg-slate-800/80 active:bg-cyan-600/80 border-2 border-cyan-400/40 rounded-2xl flex items-center justify-center text-cyan-300 text-2xl font-bold shadow-lg transition-all backdrop-blur-sm">
+      <button id="btnRight"
+        class="touch-btn flex-1 py-4 bg-slate-800/80 active:bg-cyan-600/80 border-2 border-cyan-400/40 rounded-2xl flex items-center justify-center text-cyan-300 text-2xl font-bold shadow-lg transition-all backdrop-blur-sm">
         DIREITA ▶
       </button>
     </footer>
@@ -181,7 +218,7 @@
     // --- GERENCIAMENTO DE ÁUDIO SINTETIZADO (Web Audio API) ---
     // Cria efeitos sonoros divertidos sem depender de arquivos externos!
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
+
     function playSound(type) {
       if (audioCtx.state === 'suspended') {
         audioCtx.resume();
@@ -478,12 +515,12 @@
       });
     };
 
-    addHoldEvent(btnLeft, 
-      () => { player.movingLeft = true; player.targetX = null; }, 
+    addHoldEvent(btnLeft,
+      () => { player.movingLeft = true; player.targetX = null; },
       () => { player.movingLeft = false; }
     );
-    addHoldEvent(btnRight, 
-      () => { player.movingRight = true; player.targetX = null; }, 
+    addHoldEvent(btnRight,
+      () => { player.movingRight = true; player.targetX = null; },
       () => { player.movingRight = false; }
     );
 
@@ -525,7 +562,7 @@
       const isEnergy = Math.random() < 0.65;
       const size = isEnergy ? 28 : 34;
       const x = Math.random() * (logicalW - size - 10) + 5;
-      
+
       // Velocidade base + incremento por fase
       const baseSpeed = 2.0 + (level - 1) * 0.55;
       const speed = baseSpeed + Math.random() * 1.5;
@@ -853,4 +890,5 @@
     });
   </script>
 </body>
+
 </html>
